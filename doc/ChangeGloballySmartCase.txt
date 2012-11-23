@@ -1,0 +1,99 @@
+*ChangeGloballySmartCase.txt*	Change {motion} text and repeat as SmartCase substitution.
+
+		 CHANGE GLOBALLY SMART CASE    by Ingo Karkat
+						 *ChangeGloballySmartCase.vim*
+description			|ChangeGloballySmartCase-description|
+usage				|ChangeGloballySmartCase-usage|
+installation			|ChangeGloballySmartCase-installation|
+limitations			|ChangeGloballySmartCase-limitations|
+known problems			|ChangeGloballySmartCase-known-problems|
+todo				|ChangeGloballySmartCase-todo|
+history				|ChangeGloballySmartCase-history|
+
+==============================================================================
+DESCRIPTION				 *ChangeGloballySmartCase-description*
+
+As an add-on to the |ChangeGlobally.vim| plugin (vimscript #4321), this plugin
+implements a |gC| variant that uses a "smart case" substitution which covers
+variations in upper-/lowercase ("maxSize" vs. "MaxSize") as well as different
+coding styles like CamelCase and underscore_notation ("maxSize", "MAX_SIZE").
+
+The |gC| command works just like built-in |c|, and after leaving insert mode
+applies the local substitution to all other occurrences (according to the
+|SmartCase-rules|) in the current line (in case of a small character change)
+or, when entire line(s) where changed, to the rest of the buffer.
+This is especially useful for variable renamings and all the other small
+tactical edits that you're doing frequently. It is much faster than doing a
+single change and repeating it, or building a |:substitute| command,
+especially since you would have to repeat that for all text variants that
+SmartCase covers.
+
+==============================================================================
+USAGE					       *ChangeGloballySmartCase-usage*
+								   *gC* *v_gC*
+[N]["x]gC{motion}	Like |gc|, but also substitute close textual variants
+{Visual}[N]["x]gC	of the changed text according to the |SmartCase-rules|:
+			- variations in upper-/lowercase
+			  ("maxSize" vs. "MaxSize")
+			- different coding styles like CamelCase and
+			  underscore_notation ("maxSize", "MAX_SIZE")
+									 *gCC*
+["x]gCC			Like |gcc|, but with |SmartCase-rules|. It's probably
+			less useful than |gC|, but added for completeness.
+
+EXAMPLE					     *ChangeGloballySmartCase-example*
+
+Suppose you have a line like this, and you want to rename the type from
+"NodeList" to "FooBarSet", and adapt the variable name, too:
+    function set nodeList(nodeList:NodeList):void; // Update node list. ~
+
+With the cursor on the start of any of the "nodeList", type gCe, enter the
+text "fooBarSet", then press <Esc>. The line will turn into
+    function set fooBarSet(fooBarSet:FooBarSet):void; // Update foo bar set. ~
+You can now re-apply this substitution to other lines or a visual selection
+via |.|
+
+==============================================================================
+INSTALLATION				*ChangeGloballySmartCase-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim ChangeGloballySmartCase*.vmb.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES				*ChangeGloballySmartCase-dependencies*
+
+- Requires Vim 7.0 or higher.
+- ChangeGlobally.vim (vimscript #4321)
+- SmartCase.vim (vimscript #1359)
+- repeat.vim (vimscript #2136) plugin (optional)
+- visualrepeat.vim (vimscript #3848) plugin (optional)
+
+==============================================================================
+LIMITATIONS				 *ChangeGloballySmartCase-limitations*
+
+KNOWN PROBLEMS			      *ChangeGloballySmartCase-known-problems*
+
+TODO						*ChangeGloballySmartCase-todo*
+
+IDEAS					       *ChangeGloballySmartCase-ideas*
+
+==============================================================================
+HISTORY					     *ChangeGloballySmartCase-history*
+
+1.00	23-Nov-2012
+First published version.
+
+0.01	25-Sep-2012
+Started development.
+
+==============================================================================
+Copyright: (C) 2012 Ingo Karkat
+The VIM LICENSE applies to this script; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
