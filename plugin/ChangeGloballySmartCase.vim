@@ -2,14 +2,31 @@
 "
 " DEPENDENCIES:
 "   - ChangeGlobally.vim autoload script
+"   - ingo/smartcase.vim autoload script
 "   - SmartCase.vim plugin (SmartCase() function)
 "
-" Copyright: (C) 2012-2013 Ingo Karkat
+" Copyright: (C) 2012-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.30.007	20-Jun-2014	Factor out SmartCase search pattern conversion
+"				to ingo#smartcase#FromPattern().
+"   1.30.006	16-Jun-2014	ENH: Implement global delete as a specialization
+"				of an empty change.
+"				Add a:isDelete flag to
+"				ChangeGlobally#SetParameters().
+"				Define duplicate delete mappings, with a default
+"				mapping to gX instead of gC.
+"				FIX: Substitution to make all non-alphabetic
+"				delimiter characters and whitespace optional
+"				didn't correctly deal with newline \n and the
+"				escaped \/ and \\. Tweak the regexp to deal with
+"				those.
+"				Avoid invoking SmartCase() on empty string. In
+"				the debugger, I've seen it turn it into a
+"				newline.
 "   1.20.005	14-Jun-2013	Minor: Make substitute() robust against
 "				'ignorecase'.
 "   1.20.004	19-Apr-2013	Adapt to ChangeGlobally.vim version 1.20:
@@ -40,19 +57,23 @@ set cpo&vim
 
 function! ChangeGloballySmartCase#CountedReplace()
     let l:newText = ChangeGlobally#CountedReplace()
-    return (l:newText ==# submatch(0) ? l:newText : SmartCase(l:newText))
+    return (l:newText ==# submatch(0) ?
+    \   l:newText :
+    \   (empty(l:newText) ?
+    \       '' :
+    \       SmartCase(l:newText)
+    \   )
+    \)
 endfunction
 function! ChangeGloballySmartCase#Hook( search, replace, ... )
     " Use a case-insensitive match (replace \V\C with \V\c, as the hook doesn't
     " allow to append the /i flag to the :substitute command).
     let l:search = a:search[4:]
 
-    " Make all non-alphabetic delimiter characters and whitespace optional, and
-    " allow delimiters between CamelCase fragments to catch all variants.
-    let l:search = substitute(l:search, '\A', '\\A\\?', 'g')
-    let l:search = substitute(l:search, '\(\l\)\(\u\)', '\1\\A\\?\2', 'g')
+    " The substitution separator is /; therefore, the escaped form (\/) must be
+    " converted, too.
     return [
-    \   '\V\c' . l:search,
+    \   '\V' . ingo#smartcase#FromPattern(l:search, '/'),
     \   substitute(a:replace, '\CChangeGlobally#CountedReplace', 'ChangeGloballySmartCase#CountedReplace', '')
     \]
 endfunction
@@ -61,13 +82,13 @@ endfunction
 "- mappings --------------------------------------------------------------------
 
 nnoremap <silent> <expr> <SID>(ChangeGloballySmartCaseOperator) ChangeGlobally#OperatorExpression()
-nnoremap <silent> <script> <Plug>(ChangeGloballySmartCaseOperator) :<C-u>call ChangeGlobally#SetParameters(v:count, 0, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<CR><SID>(ChangeGloballySmartCaseOperator)
+nnoremap <silent> <script> <Plug>(ChangeGloballySmartCaseOperator) :<C-u>call ChangeGlobally#SetParameters(0, v:count, 0, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<CR><SID>(ChangeGloballySmartCaseOperator)
 if ! hasmapto('<Plug>(ChangeGloballySmartCaseOperator)', 'n')
     nmap gC <Plug>(ChangeGloballySmartCaseOperator)
 endif
 nnoremap <silent> <Plug>(ChangeGloballySmartCaseLine)
 \ :<C-u>call setline('.', getline('.'))<Bar>
-\call ChangeGlobally#SetParameters(0, 0, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<Bar>
+\call ChangeGlobally#SetParameters(0, 0, 0, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<Bar>
 \execute 'normal! V' . v:count1 . "_\<lt>Esc>"<Bar>
 \call ChangeGlobally#Operator('V')<CR>
 if ! hasmapto('<Plug>(ChangeGloballySmartCaseLine)', 'n')
@@ -76,10 +97,33 @@ endif
 
 vnoremap <silent> <Plug>(ChangeGloballySmartCaseVisual)
 \ :<C-u>call setline('.', getline('.'))<Bar>
-\call ChangeGlobally#SetParameters(v:count, 1, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<Bar>
+\call ChangeGlobally#SetParameters(0, v:count, 1, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<Bar>
 \call ChangeGlobally#Operator(visualmode())<CR>
 if ! hasmapto('<Plug>(ChangeGloballySmartCaseVisual)', 'x')
     xmap gC <Plug>(ChangeGloballySmartCaseVisual)
+endif
+
+
+
+nnoremap <silent> <script> <Plug>(DeleteGloballySmartCaseOperator) :<C-u>call ChangeGlobally#SetParameters(1, v:count, 0, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<CR><SID>(ChangeGloballySmartCaseOperator)
+if ! hasmapto('<Plug>(DeleteGloballySmartCaseOperator)', 'n')
+    nmap gX <Plug>(DeleteGloballySmartCaseOperator)
+endif
+nnoremap <silent> <Plug>(DeleteGloballySmartCaseLine)
+\ :<C-u>call setline('.', getline('.'))<Bar>
+\call ChangeGlobally#SetParameters(1, 0, 0, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<Bar>
+\execute 'normal! V' . v:count1 . "_\<lt>Esc>"<Bar>
+\call ChangeGlobally#Operator('V')<CR>
+if ! hasmapto('<Plug>(DeleteGloballySmartCaseLine)', 'n')
+    nmap gXX <Plug>(DeleteGloballySmartCaseLine)
+endif
+
+vnoremap <silent> <Plug>(DeleteGloballySmartCaseVisual)
+\ :<C-u>call setline('.', getline('.'))<Bar>
+\call ChangeGlobally#SetParameters(1, v:count, 1, "\<lt>Plug>(ChangeGloballySmartCaseRepeat)", "\<lt>Plug>(ChangeGloballySmartCaseVisualRepeat)", function('ChangeGloballySmartCase#Hook'))<Bar>
+\call ChangeGlobally#Operator(visualmode())<CR>
+if ! hasmapto('<Plug>(DeleteGloballySmartCaseVisual)', 'x')
+    xmap gX <Plug>(DeleteGloballySmartCaseVisual)
 endif
 
 

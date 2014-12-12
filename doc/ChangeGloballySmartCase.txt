@@ -5,6 +5,7 @@
 description			|ChangeGloballySmartCase-description|
 usage				|ChangeGloballySmartCase-usage|
 installation			|ChangeGloballySmartCase-installation|
+configuration			|ChangeGloballySmartCase-configuration|
 limitations			|ChangeGloballySmartCase-limitations|
 known problems			|ChangeGloballySmartCase-known-problems|
 todo				|ChangeGloballySmartCase-todo|
@@ -41,6 +42,11 @@ USAGE					       *ChangeGloballySmartCase-usage*
 ["x]gCC			Like |gcc|, but with |SmartCase-rules|. It's probably
 			less useful than |gC|, but added for completeness.
 
+							     *gX* *v_gX* *gXX*
+[N]["x]gX{motion}	Like |gx|, but also substitute close textual variants
+{Visual}[N]["x]gX	of the changed text according to the |SmartCase-rules|:
+["x]gXX			Like |gxx|, but with |SmartCase-rules|.
+
 EXAMPLE					     *ChangeGloballySmartCase-example*
 
 Suppose you have a line like this, and you want to rename the type from
@@ -67,11 +73,28 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES				*ChangeGloballySmartCase-dependencies*
 
 - Requires Vim 7.0 or higher.
-- ChangeGlobally.vim (vimscript #4321) plugin (version 1.20 or higher)
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.021 or
+  higher.
+- ChangeGlobally.vim (vimscript #4321) plugin (version 1.30 or higher)
 - SmartCase.vim (vimscript #1359)
 - repeat.vim (vimscript #2136) plugin (optional)
 - visualrepeat.vim (vimscript #3848) plugin (version 2.00 or higher; optional)
 
+==============================================================================
+CONFIGURATION			       *ChangeGloballySmartCase-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+					       *ChangeGloballySmartCase-remap*
+If you want to use different mappings, map your keys to the
+<Plug>(ChangeGloballySmartCase...) and <Plug>(DeleteGloballySmartCase...)
+mapping targets _before_ sourcing the script (e.g. in your |vimrc|): >
+    nmap <Leader>C <Plug>(ChangeGloballySmartCaseOperator)
+    nmap <Leader>CC <Plug>(ChangeGloballySmartCaseLine)
+    xmap <Leader>C <Plug>(ChangeGloballySmartCaseVisual)
+    nmap <Leader>X <Plug>(DeleteGloballySmartCaseOperator)
+    nmap <Leader>XX <Plug>(DeleteGloballySmartCaseLine)
+    xmap <Leader>X <Plug>(DeleteGloballySmartCaseVisual)
+<
 ==============================================================================
 LIMITATIONS				 *ChangeGloballySmartCase-limitations*
 
@@ -83,6 +106,13 @@ IDEAS					       *ChangeGloballySmartCase-ideas*
 
 ==============================================================================
 HISTORY					     *ChangeGloballySmartCase-history*
+
+1.30	12-Dec-2014
+- Adapt to interface changes of ChangeGlobally.vim version 1.30
+- ENH: Implement global delete (gX{motion}, gXX) as a specialization of an
+  empty change.
+  *** You need to update to ingo-library (vimscript #4433) version 1.021 and
+  to ChangeGlobally.vim (vimscript #4321) version 1.30! ***
 
 1.20	19-Nov-2013
 - Adapt to interface changes of ChangeGlobally.vim version 1.20
@@ -98,7 +128,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2012-2013 Ingo Karkat
+Copyright: (C) 2012-2014 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
